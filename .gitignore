@@ -1,0 +1,25 @@
+# --- Build output (STM32CubeIDE) ---
+Debug/
+Release/
+# --- Build / object artifacts ---
+*.o
+*.d
+*.su
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+*.lst
+# --- Archives ---
+*.zip
+# Not: datasheet PDF'leri ve docs/ repoda tutuluyor (bilerek izlenir).
+# --- Claude Code local settings ---
+.claude/settings.local.json
+# --- Duplicate STM32CubeIDE launch config ---
+*(1).launch
+# --- OS / editor junk ---
+Thumbs.db
+.DS_Store
+*.bak
+*~
