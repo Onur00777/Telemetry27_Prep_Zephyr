@@ -3,6 +3,9 @@
 #include "platform.h"
 #include "telemetry_buffer.h"
 #include "telemetry_protocol.h"
+#if defined(CONFIG_TELEMETRY_SIM)
+#include "sim_vehicle.h"
+#endif
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -10,8 +13,13 @@
 LOG_MODULE_REGISTER(telemetry, LOG_LEVEL_INF);
 
 #define TELEMETRY_STACK_SIZE 2048
+#if defined(CONFIG_TELEMETRY_SIM)
+#define TELEMETRY_PRIORITY   6
+#else
 #define TELEMETRY_PRIORITY   5
+#endif
 
+#if !defined(CONFIG_TELEMETRY_SIM)
 static void log_pack(void)
 {
 	int volts_x10 = (int)(MainBuffer.f[BMS_TOTAL_VOLTAGE_f] * 10.0f);
@@ -24,6 +32,7 @@ static void log_pack(void)
 		temp_x100 / 100, temp_x100 % 100,
 		soc_x1000 / 1000, soc_x1000 % 1000);
 }
+#endif
 
 static void telemetry_thread(void *p1, void *p2, void *p3)
 {
@@ -39,6 +48,10 @@ static void telemetry_thread(void *p1, void *p2, void *p3)
 	LOG_INF("telemetry thread %u ms", APP_TELEMETRY_PERIOD_MS);
 
 	while (1) {
+#if defined(CONFIG_TELEMETRY_SIM)
+		uint8_t pace = 0u;
+#endif
+
 		platform_watchdog_kick();
 		if (telemetry_lock_timeout(100) == 0) {
 			telemetry_check_timeouts();
@@ -49,15 +62,26 @@ static void telemetry_thread(void *p1, void *p2, void *p3)
 				Telemetry_TransmitFrame();
 				if (Modem_RequestUdpSend(TransmitBuffer, TELEMETRY_BUFFER_LENGTH)) {
 					ticks++;
-					if (IS_ENABLED(CONFIG_TELEMETRY_SIM) || (ticks % 10u) == 0u) {
+#if defined(CONFIG_TELEMETRY_SIM)
+					if (sim_race_armed) {
+						pace = 1u;
+					}
+#else
+					if ((ticks % 10u) == 0u) {
 						log_pack();
 					}
+#endif
 				}
 			}
 			telemetry_unlock();
 		} else {
 			Telemetry_SetError(ERR_MUTEX_TIMEOUT);
 		}
+#if defined(CONFIG_TELEMETRY_SIM)
+		if (pace) {
+			sim_pace_signal();
+		}
+#endif
 		k_msleep(APP_TELEMETRY_PERIOD_MS);
 	}
 }

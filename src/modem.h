@@ -7,6 +7,7 @@
 
 void Modem_Init(void);
 void Modem_Poll(void);
+void Modem_SimulationStop(void);
 bool Modem_IsReady(void);
 bool Modem_RequestUdpSend(const uint8_t *buf, uint16_t len);
 modem_state_t Modem_GetState(void);

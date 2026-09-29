@@ -5,7 +5,7 @@
 
 LOG_MODULE_REGISTER(modem_fsm, LOG_LEVEL_INF);
 
-static void simulation_stop(void)
+void Modem_SimulationStop(void)
 {
 #if defined(CONFIG_ARCH_POSIX)
 	exit(0);
@@ -260,14 +260,9 @@ void Modem_Poll(void)
 
             if (Modem_UdpSendNow()) {
                 modem_live.qisend_ok++;
-                LOG_INF("QISEND ok #%u len=%u cereg=%d csq=%d",
+                LOG_DBG("QISEND ok #%u len=%u cereg=%d csq=%d",
                         modem_live.qisend_ok, modem_live.last_send_len,
                         modem_live.cereg, modem_live.csq);
-                if (IS_ENABLED(CONFIG_TELEMETRY_SIM) && modem_live.qisend_ok >= 12u) {
-                    LOG_INF("simulasyon bitti, %u UDP cercevesi gonderildi",
-                            modem_live.qisend_ok);
-                    simulation_stop();
-                }
                 send_retry_count = 0;
                 send_backoff_ms = 0;
                 recovery_count = 0;

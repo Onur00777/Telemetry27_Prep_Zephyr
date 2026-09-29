@@ -7,7 +7,7 @@ int main(void)
 {
 	LOG_INF("Telemetry27 Zephyr");
 #if IS_ENABLED(CONFIG_TELEMETRY_SIM)
-	LOG_INF("simulasyon: sahte CAN + sahte Quectel AT");
+	LOG_INF("endurance sim: 30 dk, 18000 paket");
 #else
 	LOG_INF("hedef STM32G474, USART3 / FDCAN2 / FDCAN3");
 #endif

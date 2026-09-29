@@ -22,7 +22,7 @@ static void log_cmd(const char *cmd)
 	}
 	memcpy(shown, cmd, n);
 	shown[n] = '\0';
-	LOG_INF("modem << %s", shown);
+	LOG_DBG("modem << %s", shown);
 }
 
 int modem_port_init(void)
@@ -51,9 +51,9 @@ int modem_port_write(const uint8_t *data, uint16_t len)
 
 	if (expecting_payload) {
 		expecting_payload = false;
-		LOG_INF("modem << yuk %u bayt crc=0x%02x", len, data[len - 1u]);
+		LOG_DBG("modem << yuk %u bayt crc=0x%02x", len, data[len - 1u]);
 		sim_reply("\r\nSEND OK\r\n");
-		LOG_INF("modem >> SEND OK");
+		LOG_DBG("modem >> SEND OK");
 		return 0;
 	}
 
@@ -74,7 +74,7 @@ int modem_port_write(const uint8_t *data, uint16_t len)
 	if (strncmp(cmd, "AT+QISEND", 9) == 0) {
 		expecting_payload = true;
 		sim_reply("\r\n> ");
-		LOG_INF("modem >> >");
+		LOG_DBG("modem >> >");
 	} else if (strncmp(cmd, "AT+CPIN?", 8) == 0) {
 		sim_reply("\r\n+CPIN: READY\r\nOK\r\n");
 	} else if (strncmp(cmd, "AT+CSQ", 6) == 0) {
