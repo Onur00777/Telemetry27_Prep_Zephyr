@@ -1,6 +1,8 @@
 # --- Build output (STM32CubeIDE) ---
 Debug/
 Release/
+# --- Zephyr west build ---
+/build/
 # --- Build / object artifacts ---
 *.o
 *.d
@@ -23,3 +25,7 @@ Thumbs.db
 .DS_Store
 *.bak
 *~
+
+build/
+build-sim/
+*.log

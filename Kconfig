@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+
+mainmenu "Telemetry27"
+
+menu "Telemetry application"
+
+config TELEMETRY_SIM
+	bool "Host simulation of CAN frames and Quectel AT replies"
+	default y if BOARD_NATIVE_SIM || BOARD_QEMU_CORTEX_M3
+	help
+	  Build without STM32 peripherals. A thread injects BMS 0x060 and
+	  inverter 0x0B0 frames, and the modem port answers AT commands
+	  with OK, the QISEND prompt and SEND OK.
+
+endmenu
+
+source "Kconfig.zephyr"

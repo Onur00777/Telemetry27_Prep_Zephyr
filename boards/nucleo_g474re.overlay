@@ -1,0 +1,210 @@
+/*
+ * Telemetry27 pin haritasi.
+ *
+ * Derleme hedefi nucleo_g474re: Zephyr'de hazir olan en yakin kart.
+ * Asil MCU STM32G474RCT6 (256 KB flash). Nucleo'daki G474RET6 512 KB'dir.
+ * Asagidaki kod bolumu 256 KB'a sabitlenir ki imaj gercek karta da sigsin
+ * ve 0x08000000'dan baslasin. Nucleo tanimi aksi halde uygulamayi MCUboot
+ * slotuna (0x0800C000) yerlestirir; bootloader olmadan islemci oradan acilmaz.
+ *
+ * Saat, calisan Cube firmware ile ayni: HSI 16 MHz / 4 * 75, PLLR /2 = 150 MHz.
+ * FDCAN cekirdegi PLLQ /6 = 50 MHz. .ioc PF0/PF1'i HSE gosterir; SystemClock_Config
+ * HSE'yi acmaz. Nucleo'nun 24 MHz HSE'si bu kartta yok, o yuzden kapali.
+ */
+
+#include <zephyr/dt-bindings/dma/stm32_dma.h>
+
+/ {
+	chosen {
+		zephyr,canbus = &fdcan2;
+		zephyr,code-partition = &code_partition;
+	};
+
+	zephyr,user {
+		modem-pwrkey-gpios = <&gpioc 6 GPIO_ACTIVE_HIGH>;
+		modem-reset-gpios = <&gpioc 7 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+/delete-node/ &boot_partition;
+/delete-node/ &slot0_partition;
+/delete-node/ &slot1_partition;
+/delete-node/ &storage_partition;
+
+&flash0 {
+	partitions {
+		code_partition: partition@0 {
+			compatible = "zephyr,mapped-partition";
+			label = "image";
+			reg = <0x00000000 DT_SIZE_K(256)>;
+		};
+	};
+};
+
+&clk_hse {
+	status = "disabled";
+};
+
+&clk_hsi {
+	status = "okay";
+};
+
+&pll {
+	div-m = <4>;
+	mul-n = <75>;
+	div-p = <2>;
+	div-q = <6>;
+	div-r = <2>;
+	clocks = <&clk_hsi>;
+	status = "okay";
+};
+
+&rcc {
+	clocks = <&pll>;
+	clock-frequency = <DT_FREQ_M(150)>;
+	ahb-prescaler = <1>;
+	apb1-prescaler = <1>;
+	apb2-prescaler = <1>;
+};
+
+/* Nucleo varsayilanlari bizim pinleri kaplar. Hepsini birakiyoruz. */
+&lpuart1 {
+	status = "disabled"; /* PA2, PA3: TIM, ST-Link konsolu degil */
+};
+
+&usart1 {
+	status = "disabled";
+};
+
+&i2c1 {
+	status = "disabled";
+};
+
+&spi1 {
+	status = "disabled"; /* PA5: tekerlek TIM2_CH1, Nucleo LED/SPI degil */
+};
+
+&spi2 {
+	status = "disabled";
+};
+
+&spi3 {
+	status = "disabled";
+};
+
+&fdcan1 {
+	status = "disabled"; /* PA11/PA12 bu kartta USB, CAN1 degil */
+};
+
+&dac1 {
+	status = "disabled";
+};
+
+&green_led {
+	status = "disabled"; /* PA5 */
+};
+
+&green_pwm_led {
+	status = "disabled";
+};
+
+&pwm2 {
+	status = "disabled"; /* tim2_ch1_pa5 */
+};
+
+&pwm3 {
+	status = "disabled"; /* tim3_ch1_pb4 = bizim FDCAN3_TX */
+};
+
+&timers3 {
+	status = "disabled";
+};
+
+/*
+ * USART3, Quectel AT portu. PB10 TX, PB11 RX, 115200 8N1.
+ * DMA kanallari Cube ile ayni: Channel1 TX (istek 29), Channel2 RX (istek 28).
+ * Zephyr G4'te kanal numarasi 1'den baslar. RX dairesel; TX normal.
+ */
+&dma1 {
+	status = "okay";
+};
+
+&dmamux1 {
+	status = "okay";
+};
+
+&usart3 {
+	pinctrl-0 = <&usart3_tx_pb10 &usart3_rx_pb11>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+	dmas = <&dmamux1 1 29 (STM32_DMA_PERIPH_TX | STM32_DMA_PRIORITY_LOW)>,
+	       <&dmamux1 2 28 (STM32_DMA_PERIPH_RX | STM32_DMA_PRIORITY_HIGH |
+			       STM32_DMA_MODE_CYCLIC)>;
+	dma-names = "tx", "rx";
+	status = "okay";
+};
+
+/*
+ * FDCAN saat kaynagi PLLQ (FDCAN_SEL 1). 50 MHz, prescaler 1.
+ * Klasik 1 Mbit: 1+42+7 tq, ornek noktasi 860/1000.
+ * FD data 2 Mbit: 1+12+12 tq, ornek noktasi 520/1000.
+ * Zephyr seg1/seg2'yi bu ornek noktasindan kendisi secer.
+ */
+&fdcan2 {
+	pinctrl-0 = <&fdcan2_rx_pb5 &fdcan2_tx_pb6>;
+	pinctrl-names = "default";
+	clocks = <&rcc STM32_CLOCK(APB1, 25)>,
+		 <&rcc STM32_SRC_PLL_Q FDCAN_SEL(1)>;
+	bitrate = <1000000>;
+	sample-point = <860>;
+	status = "okay";
+};
+
+&fdcan3 {
+	pinctrl-0 = <&fdcan3_rx_pb3 &fdcan3_tx_pb4>;
+	pinctrl-names = "default";
+	clocks = <&rcc STM32_CLOCK(APB1, 25)>,
+		 <&rcc STM32_SRC_PLL_Q FDCAN_SEL(1)>;
+	bitrate = <1000000>;
+	sample-point = <860>;
+	bitrate-data = <2000000>;
+	sample-point-data = <520>;
+	status = "okay";
+};
+
+/* Tekerlek input-capture. Uygulama henuz okumuyor; pinler kayitli, surucu kapali. */
+&timers2 {
+	status = "disabled";
+
+	counter {
+		pinctrl-0 = <&tim2_ch1_pa5 &tim2_ch3_pa2>;
+		pinctrl-names = "default";
+		status = "disabled";
+	};
+};
+
+&timers5 {
+	status = "disabled";
+
+	counter {
+		pinctrl-0 = <&tim5_ch1_pb2 &tim5_ch4_pa3>;
+		pinctrl-names = "default";
+		status = "disabled";
+	};
+};
+
+/*
+ * ADC1 PA0 ve ADC2 PA1 Cube'da acik, App/ okumuyor.
+ * Zephyr G4 dtsi su an iki ADC'yi ayni anda desteklemiyor; ikisi de kapali.
+ */
+&adc1 {
+	pinctrl-0 = <&adc1_in1_pa0>;
+	pinctrl-names = "default";
+	status = "disabled";
+};
+
+&adc2 {
+	pinctrl-0 = <&adc2_in2_pa1>;
+	pinctrl-names = "default";
+	status = "disabled";
+};

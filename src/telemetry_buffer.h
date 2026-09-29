@@ -1,0 +1,116 @@
+#ifndef TELEMETRY_BUFFER_H_
+#define TELEMETRY_BUFFER_H_
+
+#include <stdint.h>
+#include "telemetry_protocol.h"
+
+typedef enum {
+    ERR_NONE = 0x00,
+    ERR_FDCAN2_INIT = 0x01,
+    ERR_FDCAN3_INIT = 0x02,
+    ERR_UART3_INIT  = 0x03,
+    ERR_I2C1_INIT   = 0x04,
+    ERR_SPI2_INIT   = 0x05,
+    ERR_FDCAN2_RUNTIME = 0x11,
+    ERR_FDCAN3_RUNTIME = 0x12,
+    ERR_UART3_RUNTIME  = 0x13,
+    ERR_I2C1_RUNTIME   = 0x14,
+    ERR_IMU_TIMEOUT    = 0x20,
+    ERR_GPS_NO_FIX     = 0x21,
+    ERR_BMS_TIMEOUT    = 0x22,
+    ERR_INV_TIMEOUT    = 0x23,
+    ERR_LVBMS_TIMEOUT  = 0x24,
+    ERR_DASHBOARD_TIMEOUT = 0x25,
+    ERR_DAMPER_TIMEOUT = 0x26,
+    ERR_BRAKE_TIMEOUT  = 0x27,
+    ERR_BMS_VOLT_STALE = 0x28,
+    ERR_BMS_CELL_VOLTAGE = 0x29,
+    ERR_GSM_SIM_REJECT = 0x30,
+    ERR_GSM_NO_NETWORK = 0x31,
+    ERR_GSM_AT_TIMEOUT = 0x32,
+    ERR_GSM_SEND_FAIL  = 0x33,
+    ERR_QUEUE_FULL     = 0x40,
+    ERR_MUTEX_TIMEOUT  = 0x41
+} PeripheralError_t;
+
+typedef enum {
+    IMU_ACCEL_X_f, IMU_ACCEL_Y_f, IMU_ACCEL_Z_f,
+    IMU_GYRO_X_f, IMU_GYRO_Y_f, IMU_GYRO_Z_f,
+    IMU_EULER_YAW_f, IMU_EULER_ROLL_f, IMU_EULER_PITCH_f,
+    IMU_MAG_X_f, IMU_MAG_Y_f, IMU_MAG_Z_f,
+    IMU_QUAT_W_f, IMU_QUAT_X_f, IMU_QUAT_Y_f, IMU_QUAT_Z_f,
+    DAMPER_COMPRESSION_RR_f, DAMPER_COMPRESSION_RH_f, DAMPER_COMPRESSION_FR_f, DAMPER_COMPRESSION_FH_f,
+    LVBMS_VOLTAGE_f, LVBMS_CURRENT_f, LVBMS_MAX_TEMP_f, LVBMS_MIN_TEMP_f,
+    LVBMS_MAX_CELL_VOLTAGE_f, LVBMS_MIN_CELL_VOLTAGE_f, LVBMS_ESTIMATED_SoC_f,
+    LVBMS_CELL_REAL0_f, LVBMS_CELL_REAL1_f, LVBMS_CELL_REAL2_f, LVBMS_CELL_REAL3_f,
+    FLUID_TEMP_AFTER_RAD_f, FLUID_TEMP_BEFORE_RAD_f,
+    BMS_MIN_CELL_VOLTAGE_f, BMS_MAX_CELL_VOLTAGE_f, BMS_AVG_CELL_VOLTAGE_f, BMS_TOTAL_VOLTAGE_f,
+    BMS_MIN_CELL_TEMP_f, BMS_MAX_CELL_TEMP_f, BMS_AVG_CELL_TEMP_f, BMS_CURRENT_f, BMS_MAX_SLAVE_TEMP_f, BMS_ESTIMATED_SoC_f,
+    INV_CURRENT_Q_A_f, INV_CURRENT_D_A_f,
+    SLIP_RATIO_f, YAW_RATE_f,
+    WHEEL_TRAVEL_FL_f, WHEEL_TRAVEL_FR_f, WHEEL_TRAVEL_RL_f, WHEEL_TRAVEL_RR_f,
+    TIRE_TEMP_FL_f, TIRE_TEMP_FR_f, TIRE_TEMP_RL_f, TIRE_TEMP_RR_f
+} FloatIndexes_t;
+
+typedef enum {
+    IMU_SPEED_u8, GPS_SPEED_u8,
+    TIRE_SPEED_FR_u8, TIRE_SPEED_FL_u8, TIRE_SPEED_RR_u8, TIRE_SPEED_RL_u8,
+    BRAKE_PRESSURE_FRONT_u8, BRAKE_PRESSURE_REAR_u8,
+    FLUID_PRESSURE_AFTER_RAD_u8, FLUID_PRESSURE_BEFORE_RAD_u8,
+    BMS_CONTRACTORS_u8,
+    LVBMS_CELL_MIN_NUMBER_u8, LVBMS_CELL_MAX_NUMBER_u8, LVBMS_FAULTBYTE_u8,
+    IMU_CALIB_SYS_u8, IMU_CALIB_GYRO_u8, IMU_CALIB_ACCEL_u8, IMU_CALIB_MAG_u8,
+    INV_EMCTRL_FOC_BITSTATE_u8, INV_APP_STATE_APP_u8,
+    VCU_VEHICLE_STATE_u8, THROTTLE_PERCENT_u8, VCU_DRIVE_MODE_u8, VCU_VEHICLE_SPEED_u8, VCU_APP_STATE_REQ_u8, BSPD_PLAUSIBILITY_u8
+} Uint8Indexes_t;
+
+typedef enum {
+    POT1_U16, BMS_FAULTS_u16, POT2_U16,
+    INV_PWRSTG_BITSTATE_u16, INV_VOLT_MODULUS_PERMIL_u16, INV_DCBUS_VOLTAGE_u16, VCU_TORQUE_NM_REQ_u16, RTC_MILLISEC_u16
+} Uint16Indexes_t;
+
+typedef enum {
+    INV_BOARD_1_TEMP_i16, INV_BOARD_2_TEMP_i16, INV_PWRSTG_TEMP_i16, INV_EMACHINE_TEMP_1_i16, INV_EMACHINE_TEMP_2_i16,
+    INV_ACBUS_POWER_i16, INV_SETPOINT_APP_Q_i16, INV_SETPOINT_APP_D_i16, INV_TORQUE_MAX_FEAS_NDM_i16, INV_TORQUE_EST_NM_i16
+} Int16Indexes_t;
+
+typedef enum {
+    GPS_LATITUDE_i32, GPS_LONGTITUDE_i32, INV_EMACHINE_SPEED_ERPM_i32
+} Int32Indexes_t;
+
+typedef enum {
+    BMS_POWER_u32,
+    INV_DEM1_u32,
+    INV_DEM2_u32
+} Uint32Indexes_t;
+
+typedef struct {
+    float    f[75];
+    uint8_t  u8[40];
+    uint16_t u16[20];
+    int16_t  i16[20];
+    int32_t  i32[10];
+    uint32_t u32[10];
+    uint8_t cell_voltages[96];
+    uint8_t cell_temperatures[96];
+} MainBuffer_t;
+
+extern MainBuffer_t MainBuffer;
+extern uint8_t TransmitBuffer[TELEMETRY_BUFFER_LENGTH];
+extern volatile PeripheralError_t can_timeout_error;
+extern volatile uint8_t evt_overflow_cnt;
+
+void telemetry_lock(void);
+void telemetry_unlock(void);
+int telemetry_lock_timeout(uint32_t timeout_ms);
+void telemetry_on_can_id(uint32_t id);
+void telemetry_seed_timeouts(void);
+void telemetry_check_timeouts(void);
+
+void Telemetry_SetError(PeripheralError_t err);
+void Telemetry_ClearError(PeripheralError_t err);
+PeripheralError_t Telemetry_GetActiveError(void);
+uint8_t Telemetry_ErrorPriority(PeripheralError_t err);
+void Telemetry_ConsumeRuntimeError(void);
+
+#endif /* TELEMETRY_BUFFER_H_ */
