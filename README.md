@@ -1,6 +1,7 @@
 # Telemetry27 (Telemetry26 rewrite branch)
 
 Clean-architecture rewrite of Formula Student telemetry firmware for STM32G474 + Quectel EG915N-EU.
+Zephyr Simulation to be added...
 
 ## Architecture
 
